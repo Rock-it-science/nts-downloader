@@ -1,5 +1,3 @@
-# nts-downloader
+# NTS Favourites Downloader
 
-Download shows from my [NTS Radio](https://www.nts.live/) favourites page using [nts-everdrone](https://github.com/everdrone/nts) and Airflow.
-
-
+Download radio shows that I have favourited on [NTS Radio](https://www.nts.live/) using Selenium and a fork of [nts-everdrone](https://github.com/Rock-it-science/nts).
