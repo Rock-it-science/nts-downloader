@@ -77,10 +77,11 @@ def download_shows(nts_urls: list) -> None:
                 with open('downloaded_episodes.txt', 'a') as f:
                     f.write(nts_url+'\n')
             except Exception as e:
-                logging.error('!  Error with download. Moving on.')
+                logging.error('!  Error with download, message from nts downloader:')
                 with open('error_urls.txt', 'a') as f:
                     f.write(nts_url+'\n')
                 logging.info(e)
+                logging.info('Moving on.')
     return
 
 def subfolders():
