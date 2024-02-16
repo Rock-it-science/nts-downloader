@@ -1,3 +1,7 @@
 .venv/
 logs/
 .env
+__pycache__
+downloaded_episodes.txt
+error_urls.txt
+log.txt
