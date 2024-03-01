@@ -30,13 +30,20 @@ def scrape_favourites() -> list:
     driver.get('https://www.nts.live/my-nts/favourites/episodes')
 
     # Accept cookies
-    driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
-
+    try:
+        driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
+    except:
+        logging.debug('Could not find cookies box')
+        with open('failed_webpage.html', 'w') as f:
+            f.write(driver.page_source)
     # Log-in
-    user_box = driver.find_element(By.XPATH, '//*[@id="react-content"]/div[10]/div/div/form/div[1]/input')
+    user_box = driver.find_element(By.XPATH, "//input[@class='nts-auth__input nts-form__input nts-form__input--condensed']")
     logging.debug('User box is displayed? ' + str(user_box.is_displayed()))
     user_box.send_keys(os.environ['NTS_EMAIL'])
-    driver.find_element(By.NAME, 'password').send_keys(os.environ['NTS_PASS'])
+    driver.find_element(By.XPATH, "//input[@value='Next'][@class='nts-auth__input nts-button nts-button--full-width text-uppercase']").click()
+    password_box = driver.find_element(By.XPATH, "//input[@class='password-input__input nts-form__input nts-form__input--condensed']")
+    logging.debug('Password box is displayed? ' + str(password_box.is_displayed()))
+    password_box.send_keys(os.environ['NTS_PASS'])
     driver.find_element(By.XPATH, "//input[@value='Log in']").click()
 
     # Wait for load
