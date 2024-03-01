@@ -12,8 +12,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 
+from slack_sdk.webhook import WebhookClient
 from nts.downloader import download
-
 from tqdm import tqdm
 
 def scrape_favourites() -> list:
@@ -108,8 +108,18 @@ def subfolders():
 
 
 if __name__ == '__main__':
-    load_dotenv()
-    logging.basicConfig(level=logging.INFO, filename='log.txt', format='%(asctime)s %(levelname)s %(name)s %(message)s')
-    nts_urls = scrape_favourites()
-    download_shows(nts_urls)
-    subfolders()
+    stage = 'Load .env'
+    try:
+        load_dotenv()
+        logging.basicConfig(level=logging.INFO, filename='log.txt', format='%(asctime)s %(levelname)s %(name)s %(message)s')
+        stage = 'scraping'
+        nts_urls = scrape_favourites()
+        stage = 'download shows'
+        download_shows(nts_urls)
+        stage = 'organize directories'
+        subfolders()
+    except Exception as e:
+        logging.error(f'!! Script failed at stage {stage}')
+        logging.error(e)
+        webhook = WebhookClient(os.environ['SLACK_WEBHOOK'])
+        response = webhook.send(text=f"NTS Downloader failed at {stage} stage")
