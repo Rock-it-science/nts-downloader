@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "nts-favourites-downloader"
+version = "0.1.0"
+description = ""
+authors = ["Rock_it_science <wilmc17@gmail.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.10"
+selenium = "4.15.2"
+webdriver-manager = "^4.0.1"
+slack-sdk = "^3.27.1"
+tqdm = "^4.66.2"
+python-dotenv = "^1.0.1"
+nts-everdrone = {git = "https://github.com/Rock-it-science/nts"}
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
