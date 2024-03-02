@@ -34,15 +34,24 @@ def scrape_favourites() -> list:
         driver.find_element(By.ID, 'onetrust-accept-btn-handler').click()
     except:
         logging.debug('Could not find cookies box')
-        with open('failed_webpage.html', 'w') as f:
-            f.write(driver.page_source)
+    
+    time.sleep(1)
+            
     # Log-in
     user_box = driver.find_element(By.XPATH, "//input[@class='nts-auth__input nts-form__input nts-form__input--condensed']")
     logging.debug('User box is displayed? ' + str(user_box.is_displayed()))
     user_box.send_keys(os.environ['NTS_EMAIL'])
-    driver.find_element(By.XPATH, "//input[@value='Next'][@class='nts-auth__input nts-button nts-button--full-width text-uppercase']").click()
-    password_box = driver.find_element(By.XPATH, "//input[@class='password-input__input nts-form__input nts-form__input--condensed']")
-    logging.debug('Password box is displayed? ' + str(password_box.is_displayed()))
+    time.sleep(2)
+    next_button = driver.find_element(By.XPATH, "//input[@value='Next'][@class='nts-auth__input nts-button nts-button--full-width text-uppercase']")
+    if not next_button.is_enabled():
+        driver.save_screenshot('debug_screenshots/disabled_next_button.png')
+        raise Exception('Next button disabled')
+    next_button.click()
+    time.sleep(2)
+    password_box = driver.find_element(By.XPATH, "//input[@name='password'][@class='password-input__input nts-form__input nts-form__input--condensed']")
+    if not password_box.is_displayed():
+        driver.save_screenshot('debug_screenshots/no_password_box.png')
+        raise Exception('Password input not found.')
     password_box.send_keys(os.environ['NTS_PASS'])
     driver.find_element(By.XPATH, "//input[@value='Log in']").click()
 
@@ -119,7 +128,6 @@ if __name__ == '__main__':
         stage = 'organize directories'
         subfolders()
     except Exception as e:
-        logging.error(f'!! Script failed at stage {stage}')
-        logging.error(e)
+        logging.exception(f'!! Script failed at stage {stage}', exc_info=True)
         webhook = WebhookClient(os.environ['SLACK_WEBHOOK'])
         response = webhook.send(text=f"NTS Downloader failed at {stage} stage")
