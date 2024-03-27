@@ -8,7 +8,7 @@ package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.10"
-selenium = "4.15.2"
+selenium = "4.18.1"
 webdriver-manager = "^4.0.1"
 slack-sdk = "^3.27.1"
 tqdm = "^4.66.2"

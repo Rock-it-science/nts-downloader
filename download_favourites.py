@@ -5,12 +5,13 @@ import time
 from dotenv import load_dotenv
 
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import WebDriverWait
+
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
 from slack_sdk.webhook import WebhookClient
 from nts.downloader import download
@@ -38,19 +39,28 @@ def scrape_favourites() -> list:
     time.sleep(1)
             
     # Log-in
-    user_box = driver.find_element(By.XPATH, "//input[@class='nts-auth__input nts-form__input nts-form__input--condensed']")
+    try:
+        # There are 2 username entry fields in the dom - fetch the visible one
+        user_boxes = driver.find_elements(By.XPATH, "//input[@name='username']")
+        if user_boxes[0].is_displayed():
+            user_box = user_boxes[0]
+        else:
+            user_box = user_boxes[1]
+    except:
+        driver.save_screenshot('/logs/debug_screenshots/no_user_box.png')
+        raise Exception('User input box not found')
     logging.debug('User box is displayed? ' + str(user_box.is_displayed()))
     user_box.send_keys(os.environ['NTS_EMAIL'])
     time.sleep(2)
     next_button = driver.find_element(By.XPATH, "//input[@value='Next'][@class='nts-auth__input nts-button nts-button--full-width text-uppercase']")
     if not next_button.is_enabled():
-        driver.save_screenshot('debug_screenshots/disabled_next_button.png')
+        driver.save_screenshot('/logs/debug_screenshots/disabled_next_button.png')
         raise Exception('Next button disabled')
     next_button.click()
     time.sleep(2)
     password_box = driver.find_element(By.XPATH, "//input[@name='password'][@class='password-input__input nts-form__input nts-form__input--condensed']")
     if not password_box.is_displayed():
-        driver.save_screenshot('debug_screenshots/no_password_box.png')
+        driver.save_screenshot('/logs/debug_screenshots/no_password_box.png')
         raise Exception('Password input not found.')
     password_box.send_keys(os.environ['NTS_PASS'])
     driver.find_element(By.XPATH, "//input[@value='Log in']").click()
@@ -83,18 +93,18 @@ def download_shows(nts_urls: list) -> None:
     Download NTS show episodes using nts-everdrone
     """
     logging.info('\nLooking for new episodes...')
-    with open('downloaded_episodes.txt', 'r') as f:
+    with open('/nts/logs/downloaded_episodes.txt', 'r') as f:
         existing_episodes = f.readlines()
     for nts_url in tqdm(nts_urls):
         if nts_url+'\n' not in existing_episodes:
             logging.info(f'\nDownloading: {nts_url}')
             try:
-                parsed = download(nts_url, quiet=False, save_dir=f'/media/downloads/music/nts-shows/')
-                with open('downloaded_episodes.txt', 'a') as f:
+                parsed = download(nts_url, quiet=False, save_dir=f'/downloads/music/nts-shows/')
+                with open('/nts/logs/downloaded_episodes.txt', 'a') as f:
                     f.write(nts_url+'\n')
             except Exception as e:
                 logging.error('!  Error with download, message from nts downloader:')
-                with open('error_urls.txt', 'a') as f:
+                with open('/nts/logs/error_urls.txt', 'a') as f:
                     f.write(nts_url+'\n')
                 logging.info(e)
                 logging.info('Moving on.')
@@ -104,7 +114,7 @@ def subfolders():
     """
     Parse nts shows directory and move shows to subdirectories to help with Plex auto-organization.
     """
-    for root, dirs, files in os.walk('/media/downloads/music/nts-shows'):
+    for root, dirs, files in os.walk('/downloads/music/nts-shows'):
         for file in files:
             show_name = file.split(' w-')[0].split(' -')[0].split('.')[0]
             if show_name not in dirs:
@@ -120,7 +130,7 @@ if __name__ == '__main__':
     stage = 'Load .env'
     try:
         load_dotenv()
-        logging.basicConfig(level=logging.INFO, filename='log.txt', format='%(asctime)s %(levelname)s %(name)s %(message)s')
+        logging.basicConfig(level=logging.INFO, filename='/nts/logs/log.txt', format='%(asctime)s %(levelname)s %(name)s %(message)s')
         stage = 'scraping'
         nts_urls = scrape_favourites()
         stage = 'download shows'
@@ -130,4 +140,4 @@ if __name__ == '__main__':
     except Exception as e:
         logging.exception(f'!! Script failed at stage {stage}', exc_info=True)
         webhook = WebhookClient(os.environ['SLACK_WEBHOOK'])
-        response = webhook.send(text=f"NTS Downloader failed at {stage} stage")
+        # response = webhook.send(text=f"NTS Downloader failed at {stage} stage")
